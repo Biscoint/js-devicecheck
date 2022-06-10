@@ -18,7 +18,7 @@ const { isValid: isDeviceCheckTokenValid/*, statusCode */} = await validateToken
   token_provided_by_client_side,
   { iss: APPLE_JWT_ISS,
     kid: APPLE_JWT_KID,
-    privateKeyPEM: APPLE_JWT_PRIVATE_KEY
+    privateKey: APPLE_JWT_PRIVATE_KEY
   },
   // Optional options
   {
