@@ -1,4 +1,4 @@
-# DeviceCheck
+# js-devicecheck
 
 You may use this tiny module to validate Apple DeviceCheck tokens with the Apple DeviceCheck API. (Probably works in Node and Cloudflare Worker, but not tested yet)
 
@@ -6,8 +6,13 @@ Although this lib probably works in the browser, there is no reason to implement
 
 ## Server-side implementation
 
+Install the package
+```sh
+npm install js-devicecheck
+```
+Example code:
 ```javascript
-import { validateToken } from 'devicecheck';
+import { validateToken } from 'js-devicecheck';
 
 const { isValid: isDeviceCheckTokenValid/*, statusCode */} = await validateToken(
   token_provided_by_client_side,
