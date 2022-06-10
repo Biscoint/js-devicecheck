@@ -16,8 +16,9 @@ import { validateToken } from 'js-devicecheck';
 
 const { isValid: isDeviceCheckTokenValid/*, statusCode */} = await validateToken(
   token_provided_by_client_side,
-  { iss: APPLE_JWT_ISS,
-    kid: APPLE_JWT_KID,
+  { iss: APPLE_JWT_ISS, // this is the issuer (your team id, you can get at https://developer.apple.com/account/#/membership/ in the redirected url)
+    kid: APPLE_JWT_KID, // this is the key id (you can generate at https://developer.apple.com/account/ios/authkey/, select keys and +)
+    // this is the private key (you can generate at https://developer.apple.com/account/ios/authkey/ too), is the p8 file content
     privateKey: APPLE_JWT_PRIVATE_KEY
   },
   // Optional options

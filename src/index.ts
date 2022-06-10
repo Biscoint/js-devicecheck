@@ -1,6 +1,6 @@
 import { v4 as uuid } from "uuid";
 import { SignJWT, importPKCS8 } from "jose";
-import { $fetch } from "ohmyfetch";
+import { $fetch, FetchError } from "ohmyfetch";
 
 interface AppleDeviceCheckCredentials {
   iss: string;
@@ -29,33 +29,38 @@ const validateToken = async function (
 ) {
   const { iss, kid, privateKey } = credentials;
 
-  const jwtPayload = {
-    iss,
-    iat: Math.floor(Date.now() / 1000),
-  };
-
-  const jwt = await new SignJWT(jwtPayload)
+  const jwt = await new SignJWT({})
+    .setIssuer(iss)
     .setProtectedHeader({ alg: ALGORITHM, kid })
     .sign(await importPKCS8(privateKey, ALGORITHM));
 
   const environment = options.isDevelopment ? "api.development" : "api";
 
-  const response = await $fetch(
-    `https://${environment}.${options.host}${options.endpoint}`,
-    {
-      method: "POST",
-      body: JSON.stringify({
-        device_token: deviceToken,
-        transaction_id: uuid(),
-        timestamp: Date.now(),
-      }),
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-      },
-    }
-  );
+  let status: number | undefined;
 
-  return { isValid: response.status === 200, statusCode: response.status };
+  try {
+    ({ status } = await $fetch(
+      `https://${environment}.${options.host}${options.endpoint}`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          device_token: deviceToken,
+          transaction_id: uuid(),
+          timestamp: Date.now(),
+        }),
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+        },
+      }
+    ));
+  } catch(error) {
+    if (error instanceof FetchError && error.response) {
+      status = error.response.status;
+    }
+  }
+
+
+  return { isValid: status === 200, statusCode: status };
 };
 
 export { validateToken };
