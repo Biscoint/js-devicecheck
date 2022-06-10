@@ -1,20 +1,31 @@
 # DeviceCheck
 
-You may use this tiny module to validate Apple DeviceCheck tokens with the Apple DeviceCheck API.
+You may use this tiny module to validate Apple DeviceCheck tokens with the Apple DeviceCheck API. (Probably works in Node and Cloudflare Worker, but not tested yet)
 
-## Worker implementation
+Although this lib probably works in the browser, there is no reason to implement business rules (server side code) in the browser.
+
+## Server-side implementation
 
 ```javascript
-const deviceCheck = require("@bearologics/devicecheck");
+import { validateToken } from 'devicecheck';
 
-const deviceCheckPassed = await deviceCheck(request, {
-    iss: APPLE_JWT_ISS,
+const { isValid: isDeviceCheckTokenValid/*, statusCode */} = await validateToken(
+  token_provided_by_client_side,
+  { iss: APPLE_JWT_ISS,
     kid: APPLE_JWT_KID,
-    privateKeyPEM: APPLE_JWT_PRIVATE_KEY,
-});
+    privateKeyPEM: APPLE_JWT_PRIVATE_KEY
+  },
+  // Optional options
+  {
+    isDevelopment: true // optional, default false
+    // host: optional host if apple changes host (defaults to devicecheck.apple.com)
+    // endpoint: optional endpoint if apple changes endpoint (defaults to /v1/validate_device_token)
+  }
+);
 
-if (!deviceCheckPassed) {
-    return new Response("Unauthorized", { status: 401 });
+if (!isDeviceCheckTokenValid) {
+  // Make your own logic here to handle not validated
+  throw new Error('DeviceCheck has failed');
 }
 …
 ```
@@ -41,7 +52,8 @@ DCDevice.current.generateToken { data, error in
 
   let tokenString = data.base64EncodedString() // going to use this in our header
 
-  let request = URLRequest(url: "https://my-worker.my-handle.workers.dev")
+  let request = URLRequest(url: "https://example.com")
+  // or make your own way to push to your server side
   request.setValue(tokenString, forHTTPHeaderField: "X-Apple-Device-Token")
 
   // optional when signing using a development certificate
