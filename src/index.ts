@@ -54,8 +54,8 @@ const validateToken = async function (
       }
     ));
   } catch(error) {
-    if (error instanceof FetchError && error.response) {
-      status = error.response.status;
+    if (error && (error as FetchError).response) {
+      status = (error as FetchError).response!.status;
     }
   }
 
