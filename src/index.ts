@@ -23,23 +23,36 @@ const validateToken = async function (
   credentials: AppleDeviceCheckCredentials,
   options: AppleDeviceCheckOptions = {
     isDevelopment: false,
-    host: APPLE_HOST,
-    endpoint: APPLE_DEVICE_CHECK_ENDPOINT,
   }
 ) {
+  if (!options.host) {
+    options.host = APPLE_HOST;
+  }
+  if (!options.endpoint) {
+    options.endpoint = APPLE_DEVICE_CHECK_ENDPOINT;
+  }
   const { iss, kid, privateKey } = credentials;
 
-  const jwt = await new SignJWT({})
-    .setIssuer(iss)
-    .setProtectedHeader({ alg: ALGORITHM, kid })
-    .sign(await importPKCS8(privateKey, ALGORITHM));
+  let jwt;
+  try {
+    const key = await importPKCS8(privateKey, ALGORITHM);
+
+    jwt = await new SignJWT({
+      iss,
+      iat: Math.floor(Date.now() / 1000),
+    })
+      .setProtectedHeader({ alg: ALGORITHM, kid, typ: "JWT" })
+      .sign(key);
+  } catch (err) {
+    throw new Error(`Error during signature, invalid key?`);
+  }
 
   const environment = options.isDevelopment ? "api.development" : "api";
 
   let status: number | undefined;
 
   try {
-    ({ status } = await $fetch(
+    ({ status } = await $fetch.raw(
       `https://${environment}.${options.host}${options.endpoint}`,
       {
         method: "POST",
@@ -53,12 +66,11 @@ const validateToken = async function (
         },
       }
     ));
-  } catch(error) {
+  } catch (error) {
     if (error && (error as FetchError).response) {
       status = (error as FetchError).response!.status;
     }
   }
-
 
   return { isValid: status === 200, statusCode: status };
 };
